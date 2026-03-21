@@ -8,9 +8,13 @@ import {
 interface DataTableProps<TData> {
   data: TData[];
   columns: ColumnDef<TData>[];
+  onRowClick?: (row: TData) => void;
 }
-
-export function DataTable<TData>({ data, columns }: DataTableProps<TData>) {
+export function DataTable<TData>({
+  data,
+  columns,
+  onRowClick,
+}: DataTableProps<TData>) {
   const table = useReactTable({
     data,
     columns,
@@ -45,7 +49,11 @@ export function DataTable<TData>({ data, columns }: DataTableProps<TData>) {
 
       <tbody>
         {table.getRowModel().rows.map((row) => (
-          <tr key={row.id}>
+          <tr
+            key={row.id}
+            style={{ cursor: onRowClick ? "pointer" : "default" }}
+            onClick={() => onRowClick?.(row.original)}
+          >
             {row.getVisibleCells().map((cell) => (
               <td
                 key={cell.id}

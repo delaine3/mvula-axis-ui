@@ -3,8 +3,10 @@ import { type ColumnDef } from "@tanstack/react-table";
 import { getOrders } from "../api/ordersApi";
 import { DataTable } from "../../../components/ui/DataTable";
 import type { Order } from "../types/order";
+import { useNavigate } from "react-router-dom";
 
 export function OrdersPage() {
+  const navigate = useNavigate();
   const { data, isLoading, isError } = useQuery({
     queryKey: ["orders"],
     queryFn: () => getOrders(),
@@ -39,8 +41,11 @@ export function OrdersPage() {
   return (
     <section>
       <h2>Orders</h2>
-
-      <DataTable data={data?.items ?? []} columns={columns} />
+      <DataTable
+        data={data?.items ?? []}
+        columns={columns}
+        onRowClick={(order) => navigate(`/orders/${order.id}`)}
+      />{" "}
     </section>
   );
 }
