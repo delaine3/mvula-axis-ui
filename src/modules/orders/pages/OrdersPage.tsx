@@ -4,6 +4,7 @@ import type { Order } from "../types/order";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { deleteOrder, getOrders } from "../api/ordersApi";
+import { Pencil, Trash2 } from "lucide-react";
 
 export function OrdersPage() {
   const queryClient = useQueryClient();
@@ -93,14 +94,16 @@ export function OrdersPage() {
       cell: ({ row }) => (
         <div style={{ display: "flex", gap: "8px" }}>
           <Link
+            className="icon-button icon-button-edit"
             to={`/orders/${row.original.id}/edit`}
             onClick={(e) => e.stopPropagation()}
           >
-            Edit
+            <Pencil size={18} />
           </Link>
 
           <button
             type="button"
+            className="icon-button icon-button-delete"
             onClick={(e) => {
               e.stopPropagation();
               const confirmed = window.confirm(
@@ -109,8 +112,9 @@ export function OrdersPage() {
               if (!confirmed) return;
               deleteMutation.mutate(row.original.id);
             }}
+            title="Delete order"
           >
-            Delete
+            <Trash2 size={18} />
           </button>
         </div>
       ),
@@ -119,12 +123,16 @@ export function OrdersPage() {
 
   return (
     <section>
-      <h2>Orders</h2>
+      <div className="page-header">
+        <h2 className="page-title">Orders</h2>
+        <Link to="/orders/new" className="button-link">
+          Create Order
+        </Link>
+      </div>
 
-      <div style={{ marginBottom: "16px", display: "flex", gap: "12px" }}>
-        <Link to="/orders/new">Create Order</Link>
-
+      <div className="toolbar">
         <input
+          className="text-input"
           placeholder="Search orders"
           value={search}
           onChange={(e) =>
@@ -136,31 +144,33 @@ export function OrdersPage() {
         />
       </div>
 
-      <DataTable
-        data={data?.items ?? []}
-        columns={columns}
-        onRowClick={(order) => navigate(`/orders/${order.id}`)}
-        isLoading={isLoading}
-        isError={isError}
-        emptyMessage="No orders found."
-        sorting={{
-          sortBy,
-          direction: direction as "asc" | "desc",
-          onSort: handleSort,
-        }}
-        pagination={{
-          page: data?.page ?? 0,
-          totalPages: data?.totalPages ?? 1,
-          size,
-          onPreviousPage: () => updateParams({ page: Math.max(page - 1, 0) }),
-          onNextPage: () =>
-            updateParams({
-              page: data && page + 1 < data.totalPages ? page + 1 : page,
-            }),
-          onPageSizeChange: (nextSize) =>
-            updateParams({ size: nextSize, page: 0 }),
-        }}
-      />
+      <div className="table-container">
+        <DataTable
+          data={data?.items ?? []}
+          columns={columns}
+          onRowClick={(order) => navigate(`/orders/${order.id}`)}
+          isLoading={isLoading}
+          isError={isError}
+          emptyMessage="No orders found."
+          sorting={{
+            sortBy,
+            direction: direction as "asc" | "desc",
+            onSort: handleSort,
+          }}
+          pagination={{
+            page: data?.page ?? 0,
+            totalPages: data?.totalPages ?? 1,
+            size,
+            onPreviousPage: () => updateParams({ page: Math.max(page - 1, 0) }),
+            onNextPage: () =>
+              updateParams({
+                page: data && page + 1 < data.totalPages ? page + 1 : page,
+              }),
+            onPageSizeChange: (nextSize) =>
+              updateParams({ size: nextSize, page: 0 }),
+          }}
+        />
+      </div>
     </section>
   );
 }

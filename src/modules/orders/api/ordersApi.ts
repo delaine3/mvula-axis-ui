@@ -7,6 +7,8 @@ interface GetOrdersParams {
   sortBy?: string;
   sortDir?: string;
   search?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 export async function getOrders(

@@ -56,7 +56,7 @@ export function DataTable<TData>({
 
   if (isLoading) {
     return (
-      <div>
+      <div className="card">
         {title && <h2>{title}</h2>}
         <p>Loading...</p>
       </div>
@@ -65,7 +65,7 @@ export function DataTable<TData>({
 
   if (isError) {
     return (
-      <div>
+      <div className="card">
         {title && <h2>{title}</h2>}
         <p>Failed to load data.</p>
       </div>
@@ -74,7 +74,7 @@ export function DataTable<TData>({
 
   if (data.length === 0) {
     return (
-      <div>
+      <div className="card">
         {title && <h2>{title}</h2>}
         <p>{emptyMessage}</p>
       </div>
@@ -82,11 +82,17 @@ export function DataTable<TData>({
   }
 
   return (
-    <div>
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
-        <thead>
+    <div style={{ backgroundColor: "#ccded3", padding: "4px" }}>
+      <table
+        style={{
+          backgroundColor: "#ccded3",
+          width: "100%",
+          borderCollapse: "collapse",
+        }}
+      >
+        <thead style={{ backgroundColor: "#ccded3" }}>
           {table.getHeaderGroups().map((headerGroup) => (
-            <tr key={headerGroup.id}>
+            <tr style={{ backgroundColor: "#ccded3" }} key={headerGroup.id}>
               {headerGroup.headers.map((header) => {
                 const meta = header.column.columnDef.meta as
                   | ColumnMeta
@@ -98,9 +104,10 @@ export function DataTable<TData>({
                   <th
                     key={header.id}
                     style={{
+                      backgroundColor: "#ccded3",
                       textAlign: "left",
                       padding: "12px",
-                      borderBottom: "1px solid #e5e7eb",
+                      borderBottom: "1px solid #ccded3",
                     }}
                   >
                     {header.isPlaceholder ? null : isSortable ? (
@@ -148,7 +155,7 @@ export function DataTable<TData>({
                   key={cell.id}
                   style={{
                     padding: "12px",
-                    borderBottom: "1px solid #f1f5f9",
+                    borderBottom: "1px solid #e4ede8",
                   }}
                 >
                   {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -169,6 +176,7 @@ export function DataTable<TData>({
           }}
         >
           <button
+            className="button button-secondary"
             type="button"
             onClick={pagination.onPreviousPage}
             disabled={pagination.page === 0}
@@ -181,6 +189,7 @@ export function DataTable<TData>({
           </span>
 
           <button
+            className="button button-secondary"
             type="button"
             onClick={pagination.onNextPage}
             disabled={pagination.page + 1 >= pagination.totalPages}
@@ -189,6 +198,7 @@ export function DataTable<TData>({
           </button>
 
           <select
+            className="select-input"
             value={pagination.size}
             onChange={(e) =>
               pagination.onPageSizeChange(Number(e.target.value))
