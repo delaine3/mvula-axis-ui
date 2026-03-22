@@ -17,3 +17,18 @@ export async function getOrders(
 
   return response.data;
 }
+interface CreateOrderPayload {
+  vendor: string;
+  description: string;
+  status: string;
+  items: {
+    productName: string;
+    quantity: number;
+    unitPrice: number;
+  }[];
+}
+
+export async function createOrder(payload: CreateOrderPayload) {
+  const response = await apiClient.post("/orders", payload);
+  return response.data;
+}

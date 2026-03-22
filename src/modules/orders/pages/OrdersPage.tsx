@@ -4,6 +4,7 @@ import { getOrders } from "../api/ordersApi";
 import { DataTable } from "../../../components/ui/DataTable";
 import type { Order } from "../types/order";
 import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 export function OrdersPage() {
   const navigate = useNavigate();
@@ -41,6 +42,9 @@ export function OrdersPage() {
   return (
     <section>
       <h2>Orders</h2>
+      <div style={{ marginBottom: "16px" }}>
+        <Link to="/orders/new">Create Order</Link>
+      </div>
       <DataTable
         data={data?.items ?? []}
         columns={columns}
