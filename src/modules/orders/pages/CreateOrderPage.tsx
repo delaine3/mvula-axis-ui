@@ -7,6 +7,9 @@ export function CreateOrderPage() {
   const [vendor, setVendor] = useState("");
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState("PENDING");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+
   const [items, setItems] = useState([
     { productName: "", quantity: 1, unitPrice: 0 },
   ]);
@@ -18,21 +21,29 @@ export function CreateOrderPage() {
         onSubmit={async (e) => {
           e.preventDefault();
 
-          await createOrder({
-            vendor,
-            description,
-            status,
-            items,
-          });
+          try {
+            setErrorMessage("");
+            setIsSubmitting(true);
+            await createOrder({
+              vendor,
+              description,
+              status,
+              items,
+            });
 
-          navigate("/orders");
+            navigate("/orders");
+          } catch (error) {
+            console.error("Failed to create order", error);
+            setErrorMessage("Failed to create order");
+          } finally {
+            setIsSubmitting(false);
+          }
         }}
       >
         <div>
           <label>Vendor</label>
           <input value={vendor} onChange={(e) => setVendor(e.target.value)} />
         </div>
-
         <div>
           <label>Description</label>
           <input
@@ -117,7 +128,10 @@ export function CreateOrderPage() {
             Add Item
           </button>
         </div>
-        <button type="submit">Create Order</button>
+        <button type="submit" disabled={isSubmitting}>
+          {isSubmitting ? "Creating..." : "Create Order"}
+        </button>
+        {errorMessage && <p>{errorMessage}</p>}
       </form>
     </section>
   );
