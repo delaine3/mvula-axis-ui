@@ -4,6 +4,7 @@ import { DashboardPage } from "../modules/dashboard/pages/DashboardPage";
 import { OrdersPage } from "../modules/orders/pages/OrdersPage";
 import { OrderDetailsPage } from "../modules/orders/pages/OrderDetailsPage";
 import { CreateOrderPage } from "../modules/orders/pages/CreateOrderPage";
+import { EditOrderPage } from "../modules/orders/pages/EditOrderPage";
 
 function PlaceholderPage({ title }: { title: string }) {
   return (
@@ -27,6 +28,7 @@ export const router = createBrowserRouter([
       { path: "payroll", element: <PlaceholderPage title="Payroll" /> },
       { path: "documents", element: <PlaceholderPage title="Documents" /> },
       { path: "orders/new", element: <CreateOrderPage /> },
+      { path: "orders/:orderId/edit", element: <EditOrderPage /> },
     ],
   },
 ]);

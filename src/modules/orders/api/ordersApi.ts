@@ -5,7 +5,7 @@ interface GetOrdersParams {
   page?: number;
   size?: number;
   sortBy?: string;
-  direction?: string;
+  sortDir?: string;
   search?: string;
 }
 
@@ -36,4 +36,22 @@ export async function createOrder(payload: CreateOrderPayload) {
 
 export async function deleteOrder(orderId: number) {
   await apiClient.delete(`/orders/${orderId}`);
+}
+interface UpdateOrderPayload {
+  vendor: string;
+  description: string;
+  status: string;
+  items: {
+    productName: string;
+    quantity: number;
+    unitPrice: number;
+  }[];
+}
+
+export async function updateOrder(
+  orderId: number,
+  payload: UpdateOrderPayload,
+) {
+  const response = await apiClient.put(`/orders/${orderId}`, payload);
+  return response.data;
 }

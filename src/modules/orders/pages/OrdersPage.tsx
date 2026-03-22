@@ -1,21 +1,20 @@
 import { type ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "../../../components/ui/DataTable";
 import type { Order } from "../types/order";
-import { useNavigate } from "react-router-dom";
-import { Link } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { deleteOrder, getOrders } from "../api/ordersApi";
-import { useState } from "react";
 
 export function OrdersPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const [params, setParams] = useSearchParams();
 
-  const [search, setSearch] = useState("");
-  const [sortBy, setSortBy] = useState("id");
-  const [direction, setDirection] = useState("desc");
-  const [page, setPage] = useState(0);
-  const [size, setSize] = useState(10);
+  const search = params.get("search") ?? "";
+  const sortBy = params.get("sortBy") ?? "id";
+  const direction = params.get("direction") ?? "desc";
+  const page = Number(params.get("page") ?? 0);
+  const size = Number(params.get("size") ?? 10);
 
   const { data, isLoading, isError } = useQuery({
     queryKey: ["orders", page, size, search, sortBy, direction],
@@ -25,143 +24,143 @@ export function OrdersPage() {
         size,
         search,
         sortBy,
-        direction,
+        sortDir: direction,
       }),
   });
+
   const deleteMutation = useMutation({
     mutationFn: deleteOrder,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["orders"] });
     },
   });
+
+  const updateParams = (updates: Record<string, string | number>) => {
+    const next = new URLSearchParams(params);
+
+    Object.entries(updates).forEach(([key, value]) => {
+      next.set(key, String(value));
+    });
+
+    setParams(next);
+  };
+
+  const handleSort = (columnId: string) => {
+    if (sortBy === columnId) {
+      updateParams({
+        direction: direction === "asc" ? "desc" : "asc",
+        page: 0,
+      });
+    } else {
+      updateParams({
+        sortBy: columnId,
+        direction: "asc",
+        page: 0,
+      });
+    }
+  };
+
   const columns: ColumnDef<Order>[] = [
     {
       accessorKey: "id",
       header: "ID",
+      meta: { label: "ID", sortable: true },
     },
     {
       accessorKey: "vendor",
       header: "Vendor",
+      meta: { label: "Vendor", sortable: true },
     },
     {
       accessorKey: "description",
       header: "Description",
+      meta: { label: "Description", sortable: true },
     },
     {
       accessorKey: "status",
       header: "Status",
+      meta: { label: "Status", sortable: true },
     },
     {
       accessorKey: "totalAmount",
       header: "Total Amount",
+      meta: { label: "Total Amount", sortable: true },
     },
     {
       id: "actions",
       header: "Actions",
+      meta: { label: "Actions", sortable: false },
       cell: ({ row }) => (
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            const confirmed = window.confirm(
-              `Delete order ${row.original.id}?`,
-            );
-            if (!confirmed) return;
-            deleteMutation.mutate(row.original.id);
-          }}
-        >
-          Delete
-        </button>
+        <div style={{ display: "flex", gap: "8px" }}>
+          <Link
+            to={`/orders/${row.original.id}/edit`}
+            onClick={(e) => e.stopPropagation()}
+          >
+            Edit
+          </Link>
+
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              const confirmed = window.confirm(
+                `Delete order ${row.original.id}?`,
+              );
+              if (!confirmed) return;
+              deleteMutation.mutate(row.original.id);
+            }}
+          >
+            Delete
+          </button>
+        </div>
       ),
     },
   ];
 
-  if (isLoading) return <p>Loading orders...</p>;
-  if (isError) return <p>Failed to load orders</p>;
-
   return (
     <section>
       <h2>Orders</h2>
-      <div style={{ marginBottom: "16px" }}>
+
+      <div style={{ marginBottom: "16px", display: "flex", gap: "12px" }}>
         <Link to="/orders/new">Create Order</Link>
-      </div>
-      <div style={{ display: "flex", gap: "12px", marginBottom: "16px" }}>
+
         <input
           placeholder="Search orders"
           value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(0);
-          }}
+          onChange={(e) =>
+            updateParams({
+              search: e.target.value,
+              page: 0,
+            })
+          }
         />
-
-        <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-          <option value="id">ID</option>
-          <option value="vendor">Vendor</option>
-          <option value="description">Description</option>
-          <option value="status">Status</option>
-          <option value="totalAmount">Total Amount</option>
-          <option value="createdAt">Created At</option>
-        </select>
-
-        <select
-          value={direction}
-          onChange={(e) => setDirection(e.target.value)}
-        >
-          <option value="desc">Descending</option>
-          <option value="asc">Ascending</option>
-        </select>
       </div>
+
       <DataTable
         data={data?.items ?? []}
         columns={columns}
         onRowClick={(order) => navigate(`/orders/${order.id}`)}
-      />
-      <div
-        style={{
-          display: "flex",
-          gap: "12px",
-          marginTop: "16px",
-          alignItems: "center",
+        isLoading={isLoading}
+        isError={isError}
+        emptyMessage="No orders found."
+        sorting={{
+          sortBy,
+          direction: direction as "asc" | "desc",
+          onSort: handleSort,
         }}
-      >
-        <button
-          type="button"
-          onClick={() => setPage((prev) => Math.max(prev - 1, 0))}
-          disabled={page === 0}
-        >
-          Previous
-        </button>
-
-        <span>
-          Page {data?.page !== undefined ? data.page + 1 : 1} of{" "}
-          {data?.totalPages ?? 1}
-        </span>
-
-        <button
-          type="button"
-          onClick={() =>
-            setPage((prev) =>
-              data && prev + 1 < data.totalPages ? prev + 1 : prev,
-            )
-          }
-          disabled={!data || page + 1 >= data.totalPages}
-        >
-          Next
-        </button>
-
-        <select
-          value={size}
-          onChange={(e) => {
-            setSize(Number(e.target.value));
-            setPage(0);
-          }}
-        >
-          <option value={5}>5</option>
-          <option value={10}>10</option>
-          <option value={20}>20</option>
-        </select>
-      </div>{" "}
+        pagination={{
+          page: data?.page ?? 0,
+          totalPages: data?.totalPages ?? 1,
+          size,
+          onPreviousPage: () => updateParams({ page: Math.max(page - 1, 0) }),
+          onNextPage: () =>
+            updateParams({
+              page: data && page + 1 < data.totalPages ? page + 1 : page,
+            }),
+          onPageSizeChange: (nextSize) =>
+            updateParams({ size: nextSize, page: 0 }),
+        }}
+      />
     </section>
   );
 }
