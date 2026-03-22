@@ -4,7 +4,8 @@ import type { Order, PaginatedResponse } from "../types/order";
 interface GetOrdersParams {
   page?: number;
   size?: number;
-  sort?: string;
+  sortBy?: string;
+  direction?: string;
   search?: string;
 }
 
@@ -31,4 +32,8 @@ interface CreateOrderPayload {
 export async function createOrder(payload: CreateOrderPayload) {
   const response = await apiClient.post("/orders", payload);
   return response.data;
+}
+
+export async function deleteOrder(orderId: number) {
+  await apiClient.delete(`/orders/${orderId}`);
 }
