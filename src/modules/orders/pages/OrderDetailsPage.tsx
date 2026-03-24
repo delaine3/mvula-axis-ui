@@ -1,30 +1,76 @@
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getOrders } from "../api/ordersApi";
+import { getVendors } from "../../vendors/api/vendorsApi";
 
 function formatDate(value?: string) {
   if (!value) return "N/A";
-
   return new Date(value).toLocaleString();
 }
 
 function formatCurrency(value?: number) {
   if (value === undefined || value === null) return "E0.00";
+  return `E ${value.toFixed(2)}`;
+}
 
-  return `E${value.toFixed(2)}`;
+function formatAddress(vendor?: {
+  address?: {
+    addressLine1?: string;
+    addressLine2?: string;
+    city?: string;
+    stateOrProvince?: string;
+    postalCode?: string;
+    country?: string;
+  };
+}) {
+  if (!vendor?.address) return "N/A";
+
+  const {
+    addressLine1,
+    addressLine2,
+    city,
+    stateOrProvince,
+    postalCode,
+    country,
+  } = vendor.address;
+
+  return [
+    addressLine1,
+    addressLine2,
+    city,
+    stateOrProvince,
+    postalCode,
+    country,
+  ]
+    .filter(Boolean)
+    .join(", ");
 }
 
 export function OrderDetailsPage() {
   const { orderId } = useParams();
 
-  const { data, isLoading, isError } = useQuery({
+  const {
+    data: ordersData,
+    isLoading: isOrdersLoading,
+    isError: isOrdersError,
+  } = useQuery({
     queryKey: ["orders"],
     queryFn: () => getOrders(),
   });
 
-  const order = data?.items.find((o) => o.id === Number(orderId));
+  const {
+    data: vendors = [],
+    isLoading: isVendorsLoading,
+    isError: isVendorsError,
+  } = useQuery({
+    queryKey: ["vendors"],
+    queryFn: getVendors,
+  });
 
-  if (isLoading) {
+  const order = ordersData?.items.find((o) => o.id === Number(orderId));
+  const vendor = vendors.find((v) => v.id === order?.vendorId);
+
+  if (isOrdersLoading || isVendorsLoading) {
     return (
       <section>
         <div className="page-header">
@@ -44,7 +90,7 @@ export function OrderDetailsPage() {
     );
   }
 
-  if (isError) {
+  if (isOrdersError || isVendorsError) {
     return (
       <section>
         <div className="page-header">
@@ -121,7 +167,9 @@ export function OrderDetailsPage() {
               <p className="muted-text" style={{ marginBottom: "6px" }}>
                 Vendor
               </p>
-              <p style={{ marginTop: 0 }}>{order.vendor || "N/A"}</p>
+              <p style={{ marginTop: 0 }}>
+                {order.vendorName || vendor?.name || "N/A"}
+              </p>
             </div>
 
             <div>
@@ -130,12 +178,14 @@ export function OrderDetailsPage() {
               </p>
               <p style={{ marginTop: 0 }}>{order.status}</p>
             </div>
+
             <div>
               <p className="muted-text" style={{ marginBottom: "6px" }}>
                 Is Paid?
               </p>
               <p style={{ marginTop: 0 }}>{order.isPaid ? "Yes" : "No"}</p>
             </div>
+
             <div>
               <p className="muted-text" style={{ marginBottom: "6px" }}>
                 Total Amount
@@ -196,39 +246,58 @@ export function OrderDetailsPage() {
               <p className="muted-text" style={{ marginBottom: "6px" }}>
                 Vendor Name
               </p>
-              <p style={{ marginTop: 0 }}>{order.vendor || "N/A"}</p>
+              <p style={{ marginTop: 0 }}>
+                {vendor?.name || order.vendorName || "N/A"}
+              </p>
+            </div>
+
+            <div>
+              <p className="muted-text" style={{ marginBottom: "6px" }}>
+                Category
+              </p>
+              <p style={{ marginTop: 0 }}>{vendor?.category || "N/A"}</p>
             </div>
 
             <div>
               <p className="muted-text" style={{ marginBottom: "6px" }}>
                 Location
               </p>
-              <p style={{ marginTop: 0 }}>{order.vendorLocation || "N/A"}</p>
+              <p style={{ marginTop: 0 }}>{formatAddress(vendor)}</p>
             </div>
 
             <div>
               <p className="muted-text" style={{ marginBottom: "6px" }}>
                 Contact Person
               </p>
-              <p style={{ marginTop: 0 }}>
-                {order.vendorContactPerson || "N/A"}
-              </p>
+              <p style={{ marginTop: 0 }}>{vendor?.contactPerson || "N/A"}</p>
             </div>
 
             <div>
               <p className="muted-text" style={{ marginBottom: "6px" }}>
                 Contact Number
               </p>
-              <p style={{ marginTop: 0 }}>
-                {order.vendorContactNumber || "N/A"}
-              </p>
+              <p style={{ marginTop: 0 }}>{vendor?.contactNumber || "N/A"}</p>
             </div>
 
             <div>
               <p className="muted-text" style={{ marginBottom: "6px" }}>
                 Email
               </p>
-              <p style={{ marginTop: 0 }}>{order.vendorEmail || "N/A"}</p>
+              <p style={{ marginTop: 0 }}>{vendor?.email || "N/A"}</p>
+            </div>
+
+            <div>
+              <p className="muted-text" style={{ marginBottom: "6px" }}>
+                Website
+              </p>
+              <p style={{ marginTop: 0 }}>{vendor?.website || "N/A"}</p>
+            </div>
+
+            <div>
+              <p className="muted-text" style={{ marginBottom: "6px" }}>
+                Payment Terms
+              </p>
+              <p style={{ marginTop: 0 }}>{vendor?.paymentTerms || "N/A"}</p>
             </div>
           </div>
         </div>

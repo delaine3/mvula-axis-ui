@@ -64,11 +64,11 @@ export function OrdersPage() {
   const columns: ColumnDef<Order>[] = [
     {
       accessorKey: "id",
-      header: "ID",
-      meta: { label: "ID", sortable: true },
+      header: "Order #",
+      meta: { label: "Order#", sortable: true },
     },
     {
-      accessorKey: "vendor",
+      accessorKey: "vendorName",
       header: "Vendor",
       meta: { label: "Vendor", sortable: true },
     },
@@ -76,6 +76,16 @@ export function OrdersPage() {
       accessorKey: "description",
       header: "Description",
       meta: { label: "Description", sortable: true },
+    },
+    {
+      accessorKey: "createdAt",
+      header: "Create Date",
+      meta: { label: "Create Date", sortable: true },
+    },
+    {
+      accessorKey: "updatedAt",
+      header: "Updated Date",
+      meta: { label: "Updated Date", sortable: true },
     },
     {
       accessorKey: "status",

@@ -7,8 +7,6 @@ interface GetOrdersParams {
   sortBy?: string;
   sortDir?: string;
   search?: string;
-  createdAt?: Date;
-  updatedAt?: Date;
 }
 
 export async function getOrders(
@@ -20,8 +18,10 @@ export async function getOrders(
 
   return response.data;
 }
-interface CreateOrderPayload {
-  vendor: string;
+
+export interface CreateOrderPayload {
+  vendorId: number;
+  isPaid: boolean;
   description: string;
   status: string;
   items: {
@@ -29,18 +29,15 @@ interface CreateOrderPayload {
     quantity: number;
     unitPrice: number;
   }[];
-}
-
-export async function createOrder(payload: CreateOrderPayload) {
-  const response = await apiClient.post("/orders", payload);
-  return response.data;
 }
 
 export async function deleteOrder(orderId: number) {
   await apiClient.delete(`/orders/${orderId}`);
 }
-interface UpdateOrderPayload {
-  vendor: string;
+
+export interface UpdateOrderPayload {
+  vendorId: number;
+  isPaid: boolean;
   description: string;
   status: string;
   items: {
@@ -50,10 +47,34 @@ interface UpdateOrderPayload {
   }[];
 }
 
-export async function updateOrder(
-  orderId: number,
-  payload: UpdateOrderPayload,
-) {
-  const response = await apiClient.put(`/orders/${orderId}`, payload);
-  return response.data;
+export async function updateOrder(orderId: number, payload: unknown) {
+  const response = await fetch(`http://localhost:8080/orders/${orderId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to update order");
+  }
+
+  return response.json();
+}
+
+export async function createOrder(payload: unknown) {
+  const response = await fetch("http://localhost:8080/orders", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to create order");
+  }
+
+  return response.json();
 }
