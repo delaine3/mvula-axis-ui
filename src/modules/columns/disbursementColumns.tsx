@@ -28,15 +28,32 @@ export function getDisbursementColumns({
     },
     {
       accessorKey: "totalCharged",
-      header: "Total",
+      header: "Total Charged",
       cell: ({ row }) =>
         `${row.original.currency} ${Number(row.original.totalCharged).toFixed(2)}`,
-      meta: { label: "Total", sortable: true },
+      meta: { label: "Total Charged", sortable: true },
+    },
+    {
+      accessorKey: "balanceOutstanding",
+      header: "Balance Outstanding",
+      cell: ({ row }) =>
+        `${row.original.currency} ${Number(row.original.balanceOutstanding).toFixed(2)}`,
+      meta: { label: "Balance Outstanding", sortable: true },
     },
     {
       accessorKey: "status",
       header: "Status",
       meta: { label: "Status", sortable: true },
+    },
+    {
+      accessorKey: "createdAt",
+      header: "Created At",
+      meta: { label: "Created At", sortable: true },
+    },
+    {
+      accessorKey: "dueDate",
+      header: "Due Date",
+      meta: { label: "Due Date", sortable: true },
     },
     {
       id: "actions",

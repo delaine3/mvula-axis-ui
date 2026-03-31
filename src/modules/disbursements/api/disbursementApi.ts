@@ -16,6 +16,7 @@ export interface GetDisbursementsParams {
   payeeType?: PayeeType;
   status?: DisbursementStatus;
   serviceDescription?: string;
+  search?: string;
 }
 
 export async function getDisbursements(
@@ -42,7 +43,9 @@ export async function getDisbursements(
   if (params.serviceDescription?.trim()) {
     searchParams.set("serviceDescription", params.serviceDescription);
   }
-
+  if (params.search?.trim()) {
+    searchParams.set("search", params.search);
+  }
   const response = await fetch(`${BASE_URL}?${searchParams.toString()}`);
 
   if (!response.ok) {

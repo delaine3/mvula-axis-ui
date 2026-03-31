@@ -1,16 +1,15 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { deleteDisbursement } from "../api/disbursementApi";
-
-import { createDisbursement, getDisbursements } from "../api/disbursementApi";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { deleteDisbursement, getDisbursements } from "../api/disbursementApi";
 import { DataTable } from "../../../components/ui/DataTable";
 import { getDisbursementColumns } from "../../columns/disbursementColumns";
 import type {
-  CreateDisbursementRequest,
   Disbursement,
+  DisbursementStatus,
   PageResponse,
+  PayeeType,
 } from "../types/disbursement";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 
 export function DisbursementsPage() {
   const navigate = useNavigate();
@@ -21,7 +20,15 @@ export function DisbursementsPage() {
   );
   const [loading, setLoading] = useState(false);
   const [isError, setIsError] = useState(false);
-  const [payeeNameFilter, setPayeeNameFilter] = useState("");
+
+  const [search, setSearch] = useState("");
+  const [payeeTypeFilter, setPayeeTypeFilter] = useState<PayeeType | undefined>(
+    undefined,
+  );
+  const [statusFilter, setStatusFilter] = useState<
+    DisbursementStatus | undefined
+  >(undefined);
+
   const [pageSize, setPageSize] = useState(5);
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
@@ -31,7 +38,9 @@ export function DisbursementsPage() {
     size = pageSize,
     nextSortBy = sortBy,
     nextSortDirection = sortDirection,
-    nextPayeeNameFilter = payeeNameFilter,
+    nextSearch = search,
+    nextStatusFilter = statusFilter,
+    nextPayeeTypeFilter = payeeTypeFilter,
   ) {
     setLoading(true);
     setIsError(false);
@@ -41,7 +50,9 @@ export function DisbursementsPage() {
         page,
         size,
         sort: `${nextSortBy},${nextSortDirection}`,
-        payeeName: nextPayeeNameFilter || undefined,
+        search: nextSearch.trim() || undefined,
+        status: nextStatusFilter,
+        payeeType: nextPayeeTypeFilter,
       });
 
       setPageData(data);
@@ -54,16 +65,13 @@ export function DisbursementsPage() {
   }
 
   useEffect(() => {
-    void loadDisbursements(0, pageSize);
+    void loadDisbursements();
   }, []);
 
   function handleSort(columnId: string) {
-    let nextSortBy = columnId;
-    let nextSortDirection: "asc" | "desc" = "asc";
-
-    if (sortBy === columnId) {
-      nextSortDirection = sortDirection === "asc" ? "desc" : "asc";
-    }
+    const nextSortBy = columnId;
+    const nextSortDirection: "asc" | "desc" =
+      sortBy === columnId && sortDirection === "asc" ? "desc" : "asc";
 
     setSortBy(nextSortBy);
     setSortDirection(nextSortDirection);
@@ -73,43 +81,70 @@ export function DisbursementsPage() {
       pageSize,
       nextSortBy,
       nextSortDirection,
-      payeeNameFilter,
+      search,
+      statusFilter,
+      payeeTypeFilter,
     );
   }
 
   function handlePreviousPage() {
     if (!pageData || pageData.first) return;
+
     void loadDisbursements(
       pageData.number - 1,
       pageSize,
       sortBy,
       sortDirection,
-      payeeNameFilter,
+      search,
+      statusFilter,
+      payeeTypeFilter,
     );
   }
 
   function handleNextPage() {
     if (!pageData || pageData.last) return;
+
     void loadDisbursements(
       pageData.number + 1,
       pageSize,
       sortBy,
       sortDirection,
-      payeeNameFilter,
+      search,
+      statusFilter,
+      payeeTypeFilter,
     );
   }
 
   function handlePageSizeChange(size: number) {
     setPageSize(size);
-    void loadDisbursements(0, size, sortBy, sortDirection, payeeNameFilter);
+
+    void loadDisbursements(
+      0,
+      size,
+      sortBy,
+      sortDirection,
+      search,
+      statusFilter,
+      payeeTypeFilter,
+    );
   }
 
   function handleCreateClick() {
     navigate("/disbursements/new");
   }
+
   const deleteMutation = useMutation({
     mutationFn: deleteDisbursement,
     onSuccess: () => {
+      void loadDisbursements(
+        pageData?.number ?? 0,
+        pageSize,
+        sortBy,
+        sortDirection,
+        search,
+        statusFilter,
+        payeeTypeFilter,
+      );
       queryClient.invalidateQueries({ queryKey: ["disbursements"] });
     },
   });
@@ -117,6 +152,7 @@ export function DisbursementsPage() {
   const columns = getDisbursementColumns({
     onDelete: (id) => deleteMutation.mutate(id),
   });
+
   return (
     <section style={{ padding: "1.5rem" }}>
       <DataTable
@@ -135,11 +171,19 @@ export function DisbursementsPage() {
           navigate(`/disbursements/${disbursement.id}`)
         }
         search={{
-          value: payeeNameFilter,
-          placeholder: "Search",
+          value: search,
+          placeholder: "Search disbursements",
           onChange: (value) => {
-            setPayeeNameFilter(value);
-            void loadDisbursements(0, pageSize, sortBy, sortDirection, value);
+            setSearch(value);
+            void loadDisbursements(
+              0,
+              pageSize,
+              sortBy,
+              sortDirection,
+              value,
+              statusFilter,
+              payeeTypeFilter,
+            );
           },
         }}
         createAction={{

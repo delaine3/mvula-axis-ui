@@ -23,14 +23,6 @@ const payeeTypes: PayeeType[] = [
   "OTHER",
 ];
 
-const disbursementStatus: DisbursementStatus[] = [
-  "UNPAID",
-  "PARTIALLY_PAID",
-  "PAID",
-  "OVERPAID",
-  "CANCELLED",
-];
-
 const defaultValues: CreateDisbursementRequest = {
   payeeName: "",
   payeeType: "CONTRACTOR",
@@ -126,26 +118,7 @@ export default function DisbursementForm({
             </select>
             <label className="floating-label">Payee Type</label>
           </div>
-          {/* Status */}
-          <div className="form-field select-wrapper">
-            <select
-              className="floating-select"
-              value={form.disbursementStatus}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  disbursementStatus: e.target.value as DisbursementStatus,
-                })
-              }
-            >
-              {disbursementStatus.map((type) => (
-                <option key={type} value={type}>
-                  {type}
-                </option>
-              ))}
-            </select>
-            <label className="floating-label">Status</label>
-          </div>
+
           {/* Service Description */}
           <div className="form-field">
             <input
@@ -200,37 +173,6 @@ export default function DisbursementForm({
             />
             <label className="floating-label">Due Date</label>
           </div>
-
-          {/* Installment Toggle */}
-          <div className="form-field">
-            <input
-              type="checkbox"
-              id="is-installment"
-              className="floating-input"
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  isInstallment: e.target.checked,
-                })
-              }
-            />
-            <label htmlFor="is-installment" className="floating-label">
-              Is Installment?
-            </label>
-          </div>
-          {/* Installment Count */}
-          <div className="form-field">
-            <input
-              type="number"
-              id="installment-count"
-              className="floating-input"
-              placeholder=" "
-            />
-            <label htmlFor="installment-count" className="floating-label">
-              Installment Count
-            </label>
-          </div>
-
           {/* Notes */}
           <div className="form-field form-field-full">
             <textarea

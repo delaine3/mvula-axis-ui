@@ -40,8 +40,8 @@ export function UpdateDisbursementPage() {
     isInstallment: disbursement.isInstallment,
     installmentCount: disbursement.installmentCount ?? undefined,
     notes: disbursement.notes ?? "",
+    disbursementStatus: disbursement.status,
   };
-
   return (
     <DisbursementForm
       mode="update"
