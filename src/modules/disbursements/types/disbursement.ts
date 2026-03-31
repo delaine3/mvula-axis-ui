@@ -68,3 +68,21 @@ export interface CreateDisbursementRequest {
   notes?: string;
   disbursementStatus: string;
 }
+
+export interface CreateDisbursementPaymentRequest {
+  datePaid: string;
+  amountPaid: number;
+  paymentMethod?: string;
+  referenceNumber?: string;
+  notes?: string;
+}
+
+export interface DisbursementPayment {
+  id: number;
+  datePaid: string;
+  amountPaid: number;
+  paymentMethod?: string;
+  referenceNumber?: string;
+  notes?: string;
+  createdAt: string;
+}

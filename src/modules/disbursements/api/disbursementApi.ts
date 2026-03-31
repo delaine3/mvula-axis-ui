@@ -1,4 +1,5 @@
 import type {
+  CreateDisbursementPaymentRequest,
   CreateDisbursementRequest,
   Disbursement,
   DisbursementStatus,
@@ -110,4 +111,22 @@ export async function deleteDisbursement(id: number): Promise<void> {
   if (!response.ok) {
     throw new Error("Failed to delete disbursement");
   }
+}
+export async function addDisbursementPayment(
+  disbursementId: number,
+  payload: CreateDisbursementPaymentRequest,
+): Promise<Disbursement> {
+  const response = await fetch(`${BASE_URL}/${disbursementId}/payments`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error("Failed to add payment");
+  }
+
+  return response.json();
 }
