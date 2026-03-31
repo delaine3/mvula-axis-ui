@@ -5,6 +5,7 @@ import type {
   PayeeType,
 } from "../types/disbursement";
 import { Link } from "react-router-dom";
+import { FloatingSelect } from "../../../components/ui/FloatingSelect";
 
 interface DisbursementFormProps {
   onSubmit: (payload: CreateDisbursementRequest) => Promise<void>;
@@ -35,7 +36,14 @@ const defaultValues: CreateDisbursementRequest = {
   notes: "",
   disbursementStatus: "",
 };
-
+const payeeTypeOptions = [
+  { value: "EMPLOYEE", label: "Employee" },
+  { value: "CONTRACTOR", label: "Contractor" },
+  { value: "SUPPLIER", label: "Supplier" },
+  { value: "SERVICE_PROVIDER", label: "Service Provider" },
+  { value: "LANDLORD", label: "Landlord" },
+  { value: "OTHER", label: "Other" },
+] satisfies { value: PayeeType; label: string }[];
 export default function DisbursementForm({
   onSubmit,
   mode,
@@ -99,25 +107,18 @@ export default function DisbursementForm({
           </div>
 
           {/* Payee Type */}
-          <div className="form-field select-wrapper">
-            <select
-              className="floating-select"
-              value={form.payeeType}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  payeeType: e.target.value as PayeeType,
-                })
-              }
-            >
-              {payeeTypes.map((type) => (
-                <option key={type} value={type}>
-                  {type}
-                </option>
-              ))}
-            </select>
-            <label className="floating-label">Payee Type</label>
-          </div>
+          <FloatingSelect<PayeeType>
+            id="payeeType"
+            label="Payee Type"
+            value={form.payeeType}
+            options={payeeTypeOptions}
+            onChange={(value) =>
+              setForm({
+                ...form,
+                payeeType: value,
+              })
+            }
+          />
 
           {/* Service Description */}
           <div className="form-field">

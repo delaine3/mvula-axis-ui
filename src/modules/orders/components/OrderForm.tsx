@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { Trash2 } from "lucide-react";
 import type { Vendor, CreateVendorPayload } from "../../vendors/types/vendor";
+import { FloatingSelect } from "../../../components/ui/FloatingSelect";
 
 export interface OrderFormItem {
   productName: string;
@@ -166,25 +167,18 @@ export function OrderForm({
           </div>
 
           {!useNewVendor ? (
-            <div className="form-field select-wrapper">
-              <select
-                id="vendorId"
-                className="floating-select"
-                value={vendorId}
-                onChange={(e) => setVendorId(e.target.value)}
-              >
-                <option value="">Select vendor</option>
-                {vendors.map((vendor) => (
-                  <option key={vendor.id} value={String(vendor.id)}>
-                    {vendor.name}
-                  </option>
-                ))}
-              </select>
-
-              <label htmlFor="vendorId" className="floating-label">
-                Vendor
-              </label>
-            </div>
+            <FloatingSelect
+              required
+              id="vendorId"
+              label="Vendor"
+              value={vendorId}
+              placeholderOption="Select vendor"
+              options={vendors.map((vendor) => ({
+                value: String(vendor.id),
+                label: vendor.name,
+              }))}
+              onChange={(value) => setVendorId(value)}
+            />
           ) : (
             <div
               className="card"
