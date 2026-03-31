@@ -1,11 +1,8 @@
-import { type ColumnDef } from "@tanstack/react-table";
 import { DataTable } from "../../../components/ui/DataTable";
-import type { Order } from "../types/order";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { deleteOrder, getOrders } from "../api/ordersApi";
-import { Pencil, Trash2 } from "lucide-react";
-
+import { getOrderColumns } from "../../columns/orderColumns";
 export function OrdersPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -36,11 +33,21 @@ export function OrdersPage() {
     },
   });
 
+  const columns = getOrderColumns({
+    onDelete: (id) => deleteMutation.mutate(id),
+  });
+
   const updateParams = (updates: Record<string, string | number>) => {
     const next = new URLSearchParams(params);
 
     Object.entries(updates).forEach(([key, value]) => {
-      next.set(key, String(value));
+      const stringValue = String(value);
+
+      if (stringValue.trim() === "") {
+        next.delete(key);
+      } else {
+        next.set(key, stringValue);
+      }
     });
 
     setParams(next);
@@ -60,76 +67,6 @@ export function OrdersPage() {
       });
     }
   };
-
-  const columns: ColumnDef<Order>[] = [
-    {
-      accessorKey: "id",
-      header: "Order #",
-      meta: { label: "Order#", sortable: true },
-    },
-    {
-      accessorKey: "vendorName",
-      header: "Vendor",
-      meta: { label: "Vendor", sortable: true },
-    },
-    {
-      accessorKey: "description",
-      header: "Description",
-      meta: { label: "Description", sortable: true },
-    },
-    {
-      accessorKey: "createdAt",
-      header: "Create Date",
-      meta: { label: "Create Date", sortable: true },
-    },
-    {
-      accessorKey: "updatedAt",
-      header: "Updated Date",
-      meta: { label: "Updated Date", sortable: true },
-    },
-    {
-      accessorKey: "status",
-      header: "Status",
-      meta: { label: "Status", sortable: true },
-    },
-    {
-      accessorKey: "totalAmount",
-      header: "Total Amount",
-      meta: { label: "Total Amount", sortable: true },
-    },
-    {
-      id: "actions",
-      header: "Actions",
-      meta: { label: "Actions", sortable: false },
-      cell: ({ row }) => (
-        <div style={{ display: "flex", gap: "8px" }}>
-          <Link
-            className="icon-button icon-button-edit"
-            to={`/orders/${row.original.id}/edit`}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <Pencil size={18} />
-          </Link>
-
-          <button
-            type="button"
-            className="icon-button icon-button-delete"
-            onClick={(e) => {
-              e.stopPropagation();
-              const confirmed = window.confirm(
-                `Delete order ${row.original.id}?`,
-              );
-              if (!confirmed) return;
-              deleteMutation.mutate(row.original.id);
-            }}
-            title="Delete order"
-          >
-            <Trash2 size={18} />
-          </button>
-        </div>
-      ),
-    },
-  ];
 
   return (
     <section>

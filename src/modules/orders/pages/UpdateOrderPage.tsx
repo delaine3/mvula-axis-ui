@@ -5,7 +5,7 @@ import { getOrders, updateOrder } from "../api/ordersApi";
 import { OrderForm, type OrderFormValues } from "../components/OrderForm";
 import { getVendors } from "../../vendors/api/vendorsApi";
 
-export function EditOrderPage() {
+export function UpdateOrderPage() {
   const { orderId } = useParams();
   const navigate = useNavigate();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -67,7 +67,7 @@ export function EditOrderPage() {
 
   return (
     <OrderForm
-      mode="edit"
+      mode="update"
       initialValues={initialValues}
       isSubmitting={isSubmitting}
       errorMessage={errorMessage}

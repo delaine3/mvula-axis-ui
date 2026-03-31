@@ -3,11 +3,6 @@ import { useQuery } from "@tanstack/react-query";
 import { getOrders } from "../api/ordersApi";
 import { getVendors } from "../../vendors/api/vendorsApi";
 
-function formatDate(value?: string) {
-  if (!value) return "N/A";
-  return new Date(value).toLocaleString();
-}
-
 function formatCurrency(value?: number) {
   if (value === undefined || value === null) return "E0.00";
   return `E ${value.toFixed(2)}`;
@@ -135,10 +130,10 @@ export function OrderDetailsPage() {
 
         <div style={{ display: "flex", gap: "12px" }}>
           <Link
-            to={`/orders/${order.id}/edit`}
+            to={`/orders/${order.id}/update`}
             className="button-link button-secondary"
           >
-            Edit Order
+            Update Order
           </Link>
 
           <Link to="/orders" className="button-link button-secondary">
@@ -213,14 +208,14 @@ export function OrderDetailsPage() {
               <p className="muted-text" style={{ marginBottom: "6px" }}>
                 Created At
               </p>
-              <p style={{ marginTop: 0 }}>{formatDate(order.createdAt)}</p>
+              <p style={{ marginTop: 0 }}>{order.createdAt}</p>
             </div>
 
             <div>
               <p className="muted-text" style={{ marginBottom: "6px" }}>
                 Updated At
               </p>
-              <p style={{ marginTop: 0 }}>{formatDate(order.updatedAt)}</p>
+              <p style={{ marginTop: 0 }}>{order.updatedAt}</p>
             </div>
           </div>
 

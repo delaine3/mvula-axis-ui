@@ -58,9 +58,19 @@ a {
   color: inherit;
   text-decoration: none;
 }
-
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+}
+.form-field-full {
+  grid-column: span 2;
+}
+.vertical-form {
+  display: grid;
+  gap: 16px;
+}
 /* Layout */
-
 .app-shell {
   display: grid;
   grid-template-columns: 260px 1fr;
@@ -234,6 +244,7 @@ a {
 /* Inputs */
 
 .text-input,
+.text-area,
 .select-input {
   height: 40px;
   padding: 0 12px;
@@ -420,7 +431,7 @@ tbody tr:hover {
   color: var(--danger-text);
 }
 
-.icon-button-edit:hover {
+.icon-button-update:hover {
   background: var(--warning-soft);
   border-color: var(--warning-border);
   color: var(--warning-text);
