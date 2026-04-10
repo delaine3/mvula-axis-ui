@@ -24,7 +24,7 @@ export function getPaymentColumns({
       meta: { label: "Date Paid", sortable: true },
     },
     {
-      id: "amount",
+      accessorKey: "amountPaid",
       header: "Amount",
       meta: { label: "Amount", sortable: true },
       cell: ({ row }) =>
@@ -45,7 +45,7 @@ export function getPaymentColumns({
     {
       accessorKey: "notes",
       header: "Notes",
-      meta: { label: "Notes", sortable: false },
+      meta: { label: "Notes", sortable: true },
       cell: ({ getValue }) => getValue() || "-",
     },
   ];

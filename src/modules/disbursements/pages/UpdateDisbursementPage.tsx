@@ -4,6 +4,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   addDisbursementPayment,
   getDisbursementById,
+  getDisbursementPayments,
   updateDisbursement,
 } from "../api/disbursementApi";
 import DisbursementForm from "../components/DisbursementForm";
@@ -12,12 +13,19 @@ import type {
   CreateDisbursementRequest,
 } from "../types/disbursement";
 import DisbursementPaymentForm from "../components/DisbursementPaymentForm";
+import { DataTable } from "../../../components/ui/DataTable";
+import { getPaymentColumns } from "../../columns/paymentColumns";
 
 export function UpdateDisbursementPage() {
   const { disbursementId } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
-
+  const [paymentSortBy, setPaymentSortBy] = useState("datePaid");
+  const [paymentSortDirection, setPaymentSortDirection] = useState<
+    "asc" | "desc"
+  >("desc");
+  const [paymentPage, setPaymentPage] = useState(0);
+  const [paymentSize] = useState(10);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
@@ -50,6 +58,44 @@ export function UpdateDisbursementPage() {
     isInstallment: false,
     disbursementStatus: "",
   };
+  function handlePaymentSort(columnId: string) {
+    const nextDirection: "asc" | "desc" =
+      paymentSortBy === columnId && paymentSortDirection === "asc"
+        ? "desc"
+        : "asc";
+
+    setPaymentSortBy(columnId);
+    setPaymentSortDirection(nextDirection);
+    setPaymentPage(0);
+  }
+  const paymentColumns = getPaymentColumns({
+    currency: disbursement?.currency ?? "SZL",
+  });
+  const {
+    data: paymentResponse,
+    isLoading: isPaymentsLoading,
+    isError: isPaymentsError,
+  } = useQuery({
+    queryKey: [
+      "disbursement-payments",
+      id,
+      paymentPage,
+      paymentSize,
+      paymentSortBy,
+      paymentSortDirection,
+    ],
+    queryFn: () =>
+      getDisbursementPayments({
+        disbursementId: id,
+        page: paymentPage,
+        size: paymentSize,
+        sortBy: paymentSortBy,
+        direction: paymentSortDirection,
+      }),
+    enabled: !!id,
+  });
+  const payments = paymentResponse?.content ?? [];
+  const totalPaymentPages = paymentResponse?.totalPages ?? 0;
   return (
     <section className="vertical-form">
       <DisbursementForm
@@ -101,39 +147,45 @@ export function UpdateDisbursementPage() {
         {disbursement.payments.length === 0 ? (
           <p>No payments recorded yet.</p>
         ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <th style={{ textAlign: "left", padding: "12px" }}>
-                  Date Paid
-                </th>
-                <th style={{ textAlign: "left", padding: "12px" }}>Amount</th>
-                <th style={{ textAlign: "left", padding: "12px" }}>Method</th>
-                <th style={{ textAlign: "left", padding: "12px" }}>
-                  Reference
-                </th>
-                <th style={{ textAlign: "left", padding: "12px" }}>Notes</th>
-              </tr>
-            </thead>
-            <tbody>
-              {disbursement.payments.map((payment) => (
-                <tr key={payment.id}>
-                  <td style={{ padding: "12px" }}>{payment.datePaid}</td>
-                  <td style={{ padding: "12px" }}>
-                    {disbursement.currency}{" "}
-                    {Number(payment.amountPaid).toFixed(2)}
-                  </td>
-                  <td style={{ padding: "12px" }}>
-                    {payment.paymentMethod || "-"}
-                  </td>
-                  <td style={{ padding: "12px" }}>
-                    {payment.referenceNumber || "-"}
-                  </td>
-                  <td style={{ padding: "12px" }}>{payment.notes || "-"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          <>
+            <DataTable
+              title="Payments"
+              data={payments}
+              columns={paymentColumns}
+              emptyMessage="No payments recorded."
+              sorting={{
+                sortBy: paymentSortBy,
+                direction: paymentSortDirection,
+                onSort: handlePaymentSort,
+              }}
+            />
+
+            <div className="table-pagination">
+              <button
+                type="button"
+                onClick={() => setPaymentPage((prev) => Math.max(prev - 1, 0))}
+                disabled={paymentPage === 0}
+              >
+                Previous
+              </button>
+
+              <span>
+                Page {paymentPage + 1} of {Math.max(totalPaymentPages, 1)}
+              </span>
+
+              <button
+                type="button"
+                onClick={() =>
+                  setPaymentPage((prev) =>
+                    prev + 1 < totalPaymentPages ? prev + 1 : prev,
+                  )
+                }
+                disabled={paymentPage + 1 >= totalPaymentPages}
+              >
+                Next
+              </button>
+            </div>
+          </>
         )}
       </div>
     </section>

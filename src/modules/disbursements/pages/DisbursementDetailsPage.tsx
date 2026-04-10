@@ -1,36 +1,59 @@
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { getDisbursementById } from "../api/disbursementApi";
+import { useState } from "react";
+import {
+  getDisbursementById,
+  getDisbursementPayments,
+} from "../api/disbursementApi";
 import { getPaymentColumns } from "../../columns/paymentColumns";
 import { DataTable } from "../../../components/ui/DataTable";
 import DetailGrid from "../../../components/ui/DetailGrid";
 import DetailField from "../../../components/ui/DetailField";
-import { useMemo, useState } from "react";
 
 export function DisbursementDetailsPage() {
   const { disbursementId } = useParams();
   const id = Number(disbursementId);
 
+  const [paymentSortBy, setPaymentSortBy] = useState("datePaid");
+  const [paymentSortDirection, setPaymentSortDirection] = useState<
+    "asc" | "desc"
+  >("desc");
+  const [paymentPage, setPaymentPage] = useState(0);
+  const [paymentSize] = useState(10);
+
   const {
     data: disbursement,
-    isLoading,
-    isError,
+    isLoading: isDisbursementLoading,
+    isError: isDisbursementError,
   } = useQuery({
     queryKey: ["disbursement", id],
     queryFn: () => getDisbursementById(id),
     enabled: !!id,
   });
 
-  if (isLoading) return <p>Loading disbursement...</p>;
-  if (isError) return <p>Failed to load disbursement</p>;
-  if (!disbursement) return <p>Disbursement not found</p>;
-  const paymentColumns = getPaymentColumns({
-    currency: disbursement.currency,
+  const {
+    data: paymentResponse,
+    isLoading: isPaymentsLoading,
+    isError: isPaymentsError,
+  } = useQuery({
+    queryKey: [
+      "disbursement-payments",
+      id,
+      paymentPage,
+      paymentSize,
+      paymentSortBy,
+      paymentSortDirection,
+    ],
+    queryFn: () =>
+      getDisbursementPayments({
+        disbursementId: id,
+        page: paymentPage,
+        size: paymentSize,
+        sortBy: paymentSortBy,
+        direction: paymentSortDirection,
+      }),
+    enabled: !!id,
   });
-  const [paymentSortBy, setPaymentSortBy] = useState("paymentDate");
-  const [paymentSortDirection, setPaymentSortDirection] = useState<
-    "asc" | "desc"
-  >("desc");
 
   function handlePaymentSort(columnId: string) {
     const nextDirection: "asc" | "desc" =
@@ -40,57 +63,78 @@ export function DisbursementDetailsPage() {
 
     setPaymentSortBy(columnId);
     setPaymentSortDirection(nextDirection);
+    setPaymentPage(0);
   }
 
-  function handleUndoPayment(paymentId: number) {
-    console.log("Undo payment:", paymentId);
-    // later this can call your mutation, for example:
-    // undoPaymentMutation.mutate(paymentId);
+  const paymentColumns = getPaymentColumns({
+    currency: disbursement?.currency ?? "SZL",
+  });
+
+  if (isDisbursementLoading) return <p>Loading disbursement...</p>;
+  if (isDisbursementError) return <p>Failed to load disbursement.</p>;
+  if (!disbursement) return <p>Disbursement not found.</p>;
+
+  if (isPaymentsError) {
+    return (
+      <section className="page-container">
+        <div className="page-header">
+          <h2 className="page-title">Disbursement Details</h2>
+          <Link
+            to={`/disbursements/${disbursement.id}/update`}
+            className="button-link"
+          >
+            Update Disbursement
+          </Link>
+        </div>
+
+        <div className="card">
+          <DetailGrid>
+            <DetailField label="Payee Name" value={disbursement.payeeName} />
+            <DetailField label="Payee Type" value={disbursement.payeeType} />
+            <DetailField
+              label="Service Description"
+              value={disbursement.serviceDescription}
+            />
+            <DetailField label="Status" value={disbursement.status} />
+            <DetailField
+              label="Total Charged"
+              value={`${disbursement.currency} ${Number(disbursement.totalCharged).toFixed(2)}`}
+            />
+            <DetailField
+              label="Total Paid"
+              value={`${disbursement.currency} ${Number(disbursement.totalPaid).toFixed(2)}`}
+            />
+            <DetailField
+              label="Balance Outstanding"
+              value={`${disbursement.currency} ${Number(disbursement.balanceOutstanding).toFixed(2)}`}
+            />
+            <DetailField label="Due Date" value={disbursement.dueDate ?? "-"} />
+            <DetailField
+              label="Installment"
+              value={disbursement.isInstallment ? "Yes" : "No"}
+            />
+            <DetailField
+              label="Installment Count"
+              value={disbursement.installmentCount ?? "-"}
+            />
+            <DetailField
+              label="Notes"
+              value={disbursement.notes || "-"}
+              fullWidth
+            />
+          </DetailGrid>
+        </div>
+
+        <p>Failed to load payments.</p>
+      </section>
+    );
   }
 
-  const sortedPayments = useMemo(() => {
-    if (!disbursement?.payments) return [];
-
-    return [...disbursement.payments].sort((a, b) => {
-      const aValue = a[paymentSortBy as keyof typeof a];
-      const bValue = b[paymentSortBy as keyof typeof b];
-
-      if (aValue == null && bValue == null) return 0;
-      if (aValue == null) return 1;
-      if (bValue == null) return -1;
-
-      // date handling
-      if (
-        paymentSortBy === "paymentDate" ||
-        paymentSortBy.toLowerCase().includes("date")
-      ) {
-        const aTime = new Date(String(aValue)).getTime();
-        const bTime = new Date(String(bValue)).getTime();
-
-        if (aTime < bTime) return paymentSortDirection === "asc" ? -1 : 1;
-        if (aTime > bTime) return paymentSortDirection === "asc" ? 1 : -1;
-        return 0;
-      }
-
-      // number handling
-      if (typeof aValue === "number" && typeof bValue === "number") {
-        if (aValue < bValue) return paymentSortDirection === "asc" ? -1 : 1;
-        if (aValue > bValue) return paymentSortDirection === "asc" ? 1 : -1;
-        return 0;
-      }
-
-      // string/default handling
-      const aString = String(aValue).toLowerCase();
-      const bString = String(bValue).toLowerCase();
-
-      if (aString < bString) return paymentSortDirection === "asc" ? -1 : 1;
-      if (aString > bString) return paymentSortDirection === "asc" ? 1 : -1;
-      return 0;
-    });
-  }, [disbursement?.payments, paymentSortBy, paymentSortDirection]);
+  const payments = paymentResponse?.content ?? [];
+  const totalPaymentPages = paymentResponse?.totalPages ?? 0;
 
   return (
-    <section className="page-container ">
+    <section className="page-container">
       <div className="page-header">
         <h2 className="page-title">Disbursement Details</h2>
         <Link
@@ -100,6 +144,7 @@ export function DisbursementDetailsPage() {
           Update Disbursement
         </Link>
       </div>
+
       <div className="card">
         <DetailGrid>
           <DetailField label="Payee Name" value={disbursement.payeeName} />
@@ -137,20 +182,51 @@ export function DisbursementDetailsPage() {
           />
         </DetailGrid>
       </div>
-      {disbursement.payments.length === 0 ? (
+
+      {isPaymentsLoading ? (
+        <p>Loading payments...</p>
+      ) : payments.length === 0 ? (
         <p>No payments recorded yet.</p>
       ) : (
-        <DataTable
-          title="Payments"
-          data={sortedPayments}
-          columns={paymentColumns}
-          emptyMessage="No payments recorded."
-          sorting={{
-            sortBy: paymentSortBy,
-            direction: paymentSortDirection,
-            onSort: handlePaymentSort,
-          }}
-        />
+        <>
+          <DataTable
+            title="Payments"
+            data={payments}
+            columns={paymentColumns}
+            emptyMessage="No payments recorded."
+            sorting={{
+              sortBy: paymentSortBy,
+              direction: paymentSortDirection,
+              onSort: handlePaymentSort,
+            }}
+          />
+
+          <div className="table-pagination">
+            <button
+              type="button"
+              onClick={() => setPaymentPage((prev) => Math.max(prev - 1, 0))}
+              disabled={paymentPage === 0}
+            >
+              Previous
+            </button>
+
+            <span>
+              Page {paymentPage + 1} of {Math.max(totalPaymentPages, 1)}
+            </span>
+
+            <button
+              type="button"
+              onClick={() =>
+                setPaymentPage((prev) =>
+                  prev + 1 < totalPaymentPages ? prev + 1 : prev,
+                )
+              }
+              disabled={paymentPage + 1 >= totalPaymentPages}
+            >
+              Next
+            </button>
+          </div>
+        </>
       )}
     </section>
   );

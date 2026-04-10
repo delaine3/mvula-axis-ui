@@ -5,9 +5,18 @@ import type {
   DisbursementStatus,
   PageResponse,
   PayeeType,
+  DisbursementPayment,
 } from "../types/disbursement";
 
 const BASE_URL = "http://localhost:8080/disbursements";
+
+type GetDisbursementPaymentsParams = {
+  disbursementId: number;
+  page?: number;
+  size?: number;
+  sortBy?: string;
+  direction?: "asc" | "desc";
+};
 
 export interface GetDisbursementsParams {
   page?: number;
@@ -18,6 +27,30 @@ export interface GetDisbursementsParams {
   status?: DisbursementStatus;
   serviceDescription?: string;
   search?: string;
+}
+
+export async function getDisbursementPayments({
+  disbursementId,
+  page = 0,
+  size = 10,
+  sortBy = "datePaid",
+  direction = "desc",
+}: GetDisbursementPaymentsParams): Promise<PageResponse<DisbursementPayment>> {
+  const searchParams = new URLSearchParams();
+
+  searchParams.set("page", String(page));
+  searchParams.set("size", String(size));
+  searchParams.set("sort", `${sortBy},${direction}`);
+
+  const response = await fetch(
+    `${BASE_URL}/${disbursementId}/payments?${searchParams.toString()}`,
+  );
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch disbursement payments");
+  }
+
+  return response.json();
 }
 
 export async function getDisbursements(
@@ -44,9 +77,11 @@ export async function getDisbursements(
   if (params.serviceDescription?.trim()) {
     searchParams.set("serviceDescription", params.serviceDescription);
   }
+
   if (params.search?.trim()) {
     searchParams.set("search", params.search);
   }
+
   const response = await fetch(`${BASE_URL}?${searchParams.toString()}`);
 
   if (!response.ok) {
@@ -112,6 +147,7 @@ export async function deleteDisbursement(id: number): Promise<void> {
     throw new Error("Failed to delete disbursement");
   }
 }
+
 export async function addDisbursementPayment(
   disbursementId: number,
   payload: CreateDisbursementPaymentRequest,
