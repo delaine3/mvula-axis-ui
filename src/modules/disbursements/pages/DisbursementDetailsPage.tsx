@@ -1,6 +1,11 @@
 import { Link, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { getDisbursementById } from "../api/disbursementApi";
+import { getPaymentColumns } from "../../columns/paymentColumns";
+import { DataTable } from "../../../components/ui/DataTable";
+import DetailGrid from "../../../components/ui/DetailGrid";
+import DetailField from "../../../components/ui/DetailField";
+import { useMemo, useState } from "react";
 
 export function DisbursementDetailsPage() {
   const { disbursementId } = useParams();
@@ -19,9 +24,73 @@ export function DisbursementDetailsPage() {
   if (isLoading) return <p>Loading disbursement...</p>;
   if (isError) return <p>Failed to load disbursement</p>;
   if (!disbursement) return <p>Disbursement not found</p>;
+  const paymentColumns = getPaymentColumns({
+    currency: disbursement.currency,
+  });
+  const [paymentSortBy, setPaymentSortBy] = useState("paymentDate");
+  const [paymentSortDirection, setPaymentSortDirection] = useState<
+    "asc" | "desc"
+  >("desc");
+
+  function handlePaymentSort(columnId: string) {
+    const nextDirection: "asc" | "desc" =
+      paymentSortBy === columnId && paymentSortDirection === "asc"
+        ? "desc"
+        : "asc";
+
+    setPaymentSortBy(columnId);
+    setPaymentSortDirection(nextDirection);
+  }
+
+  function handleUndoPayment(paymentId: number) {
+    console.log("Undo payment:", paymentId);
+    // later this can call your mutation, for example:
+    // undoPaymentMutation.mutate(paymentId);
+  }
+
+  const sortedPayments = useMemo(() => {
+    if (!disbursement?.payments) return [];
+
+    return [...disbursement.payments].sort((a, b) => {
+      const aValue = a[paymentSortBy as keyof typeof a];
+      const bValue = b[paymentSortBy as keyof typeof b];
+
+      if (aValue == null && bValue == null) return 0;
+      if (aValue == null) return 1;
+      if (bValue == null) return -1;
+
+      // date handling
+      if (
+        paymentSortBy === "paymentDate" ||
+        paymentSortBy.toLowerCase().includes("date")
+      ) {
+        const aTime = new Date(String(aValue)).getTime();
+        const bTime = new Date(String(bValue)).getTime();
+
+        if (aTime < bTime) return paymentSortDirection === "asc" ? -1 : 1;
+        if (aTime > bTime) return paymentSortDirection === "asc" ? 1 : -1;
+        return 0;
+      }
+
+      // number handling
+      if (typeof aValue === "number" && typeof bValue === "number") {
+        if (aValue < bValue) return paymentSortDirection === "asc" ? -1 : 1;
+        if (aValue > bValue) return paymentSortDirection === "asc" ? 1 : -1;
+        return 0;
+      }
+
+      // string/default handling
+      const aString = String(aValue).toLowerCase();
+      const bString = String(bValue).toLowerCase();
+
+      if (aString < bString) return paymentSortDirection === "asc" ? -1 : 1;
+      if (aString > bString) return paymentSortDirection === "asc" ? 1 : -1;
+      return 0;
+    });
+  }, [disbursement?.payments, paymentSortBy, paymentSortDirection]);
 
   return (
-    <section className="page-container">
+    <section className="page-container ">
       <div className="page-header">
         <h2 className="page-title">Disbursement Details</h2>
         <Link
@@ -31,116 +100,58 @@ export function DisbursementDetailsPage() {
           Update Disbursement
         </Link>
       </div>
-
       <div className="card">
-        <div className="form-grid">
-          <div className="form-field">
-            <label className="form-label">Payee Name</label>
-            <p>{disbursement.payeeName}</p>
-          </div>
-
-          <div className="form-field">
-            <label className="form-label">Payee Type</label>
-            <p>{disbursement.payeeType}</p>
-          </div>
-
-          <div className="form-field">
-            <label className="form-label">Service Description</label>
-            <p>{disbursement.serviceDescription}</p>
-          </div>
-
-          <div className="form-field">
-            <label className="form-label">Status</label>
-            <p>{disbursement.status}</p>
-          </div>
-
-          <div className="form-field">
-            <label className="form-label">Total Charged</label>
-            <p>
-              {disbursement.currency}{" "}
-              {Number(disbursement.totalCharged).toFixed(2)}
-            </p>
-          </div>
-
-          <div className="form-field">
-            <label className="form-label">Total Paid</label>
-            <p>
-              {disbursement.currency}{" "}
-              {Number(disbursement.totalPaid).toFixed(2)}
-            </p>
-          </div>
-
-          <div className="form-field">
-            <label className="form-label">Balance Outstanding</label>
-            <p>
-              {disbursement.currency}{" "}
-              {Number(disbursement.balanceOutstanding).toFixed(2)}
-            </p>
-          </div>
-
-          <div className="form-field">
-            <label className="form-label">Due Date</label>
-            <p>{disbursement.dueDate ?? "-"}</p>
-          </div>
-
-          <div className="form-field">
-            <label className="form-label">Installment</label>
-            <p>{disbursement.isInstallment ? "Yes" : "No"}</p>
-          </div>
-
-          <div className="form-field">
-            <label className="form-label">Installment Count</label>
-            <p>{disbursement.installmentCount ?? "-"}</p>
-          </div>
-
-          <div className="form-field form-field-full">
-            <label className="form-label">Notes</label>
-            <p>{disbursement.notes || "-"}</p>
-          </div>
-        </div>
+        <DetailGrid>
+          <DetailField label="Payee Name" value={disbursement.payeeName} />
+          <DetailField label="Payee Type" value={disbursement.payeeType} />
+          <DetailField
+            label="Service Description"
+            value={disbursement.serviceDescription}
+          />
+          <DetailField label="Status" value={disbursement.status} />
+          <DetailField
+            label="Total Charged"
+            value={`${disbursement.currency} ${Number(disbursement.totalCharged).toFixed(2)}`}
+          />
+          <DetailField
+            label="Total Paid"
+            value={`${disbursement.currency} ${Number(disbursement.totalPaid).toFixed(2)}`}
+          />
+          <DetailField
+            label="Balance Outstanding"
+            value={`${disbursement.currency} ${Number(disbursement.balanceOutstanding).toFixed(2)}`}
+          />
+          <DetailField label="Due Date" value={disbursement.dueDate ?? "-"} />
+          <DetailField
+            label="Installment"
+            value={disbursement.isInstallment ? "Yes" : "No"}
+          />
+          <DetailField
+            label="Installment Count"
+            value={disbursement.installmentCount ?? "-"}
+          />
+          <DetailField
+            label="Notes"
+            value={disbursement.notes || "-"}
+            fullWidth
+          />
+        </DetailGrid>
       </div>
-
-      <div className="card" style={{ marginTop: "1.5rem" }}>
-        <h3>Payments</h3>
-
-        {disbursement.payments.length === 0 ? (
-          <p>No payments recorded yet.</p>
-        ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <th style={{ textAlign: "left", padding: "12px" }}>
-                  Date Paid
-                </th>
-                <th style={{ textAlign: "left", padding: "12px" }}>Amount</th>
-                <th style={{ textAlign: "left", padding: "12px" }}>Method</th>
-                <th style={{ textAlign: "left", padding: "12px" }}>
-                  Reference
-                </th>
-                <th style={{ textAlign: "left", padding: "12px" }}>Notes</th>
-              </tr>
-            </thead>
-            <tbody>
-              {disbursement.payments.map((payment) => (
-                <tr key={payment.id}>
-                  <td style={{ padding: "12px" }}>{payment.datePaid}</td>
-                  <td style={{ padding: "12px" }}>
-                    {disbursement.currency}{" "}
-                    {Number(payment.amountPaid).toFixed(2)}
-                  </td>
-                  <td style={{ padding: "12px" }}>
-                    {payment.paymentMethod || "-"}
-                  </td>
-                  <td style={{ padding: "12px" }}>
-                    {payment.referenceNumber || "-"}
-                  </td>
-                  <td style={{ padding: "12px" }}>{payment.notes || "-"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        )}
-      </div>
+      {disbursement.payments.length === 0 ? (
+        <p>No payments recorded yet.</p>
+      ) : (
+        <DataTable
+          title="Payments"
+          data={sortedPayments}
+          columns={paymentColumns}
+          emptyMessage="No payments recorded."
+          sorting={{
+            sortBy: paymentSortBy,
+            direction: paymentSortDirection,
+            onSort: handlePaymentSort,
+          }}
+        />
+      )}
     </section>
   );
 }

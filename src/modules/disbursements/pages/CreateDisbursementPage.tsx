@@ -6,7 +6,7 @@ import DisbursementForm from "../components/DisbursementForm";
 
 export function CreateDisbursementPage() {
   const navigate = useNavigate();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
   async function handleSubmit(payload: CreateDisbursementRequest) {

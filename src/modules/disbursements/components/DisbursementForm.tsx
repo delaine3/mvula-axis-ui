@@ -1,11 +1,11 @@
 import { useState } from "react";
 import type {
   CreateDisbursementRequest,
-  DisbursementStatus,
   PayeeType,
 } from "../types/disbursement";
 import { Link } from "react-router-dom";
 import { FloatingSelect } from "../../../components/ui/FloatingSelect";
+import FloatingInput from "../../../components/ui/FloatingInput";
 
 interface DisbursementFormProps {
   onSubmit: (payload: CreateDisbursementRequest) => Promise<void>;
@@ -14,15 +14,6 @@ interface DisbursementFormProps {
   mode: "create" | "update";
   errorMessage: string;
 }
-
-const payeeTypes: PayeeType[] = [
-  "EMPLOYEE",
-  "CONTRACTOR",
-  "SUPPLIER",
-  "SERVICE_PROVIDER",
-  "LANDLORD",
-  "OTHER",
-];
 
 const defaultValues: CreateDisbursementRequest = {
   payeeName: "",
@@ -36,6 +27,7 @@ const defaultValues: CreateDisbursementRequest = {
   notes: "",
   disbursementStatus: "",
 };
+
 const payeeTypeOptions = [
   { value: "EMPLOYEE", label: "Employee" },
   { value: "CONTRACTOR", label: "Contractor" },
@@ -44,6 +36,7 @@ const payeeTypeOptions = [
   { value: "LANDLORD", label: "Landlord" },
   { value: "OTHER", label: "Other" },
 ] satisfies { value: PayeeType; label: string }[];
+
 export default function DisbursementForm({
   onSubmit,
   mode,
@@ -54,18 +47,26 @@ export default function DisbursementForm({
   const [form, setForm] = useState<CreateDisbursementRequest>(
     initialValues ?? defaultValues,
   );
+
   const pageTitle =
     mode === "create" ? "Create Disbursement" : "Update Disbursement";
 
   const [submitting, setSubmitting] = useState(false);
-  const submitLabel = isSubmitting
-    ? mode === "create"
-      ? "Creating..."
-      : "Saving..."
-    : mode === "create"
-      ? "Create Disbursement"
-      : "Save Changes";
-  const isInvalid = !form.totalCharged;
+
+  const submitLabel =
+    isSubmitting || submitting
+      ? mode === "create"
+        ? "Creating..."
+        : "Saving..."
+      : mode === "create"
+        ? "Create Disbursement"
+        : "Save Changes";
+
+  const isInvalid =
+    !form.payeeName.trim() ||
+    !form.serviceDescription.trim() ||
+    !form.totalCharged;
+
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
@@ -95,20 +96,16 @@ export default function DisbursementForm({
 
       <form onSubmit={handleSubmit} className="form-card">
         <div className="form-grid">
-          {/* Payee Name */}
-          <div className="form-field">
-            <input
-              className="floating-input"
-              value={form.payeeName}
-              onChange={(e) => setForm({ ...form, payeeName: e.target.value })}
-              required
-            />
-            <label className="floating-label">Payee Name</label>
-          </div>
+          <FloatingInput
+            id="payee-name"
+            label="Payee Name"
+            value={form.payeeName}
+            onChange={(value) => setForm({ ...form, payeeName: value })}
+            required
+          />
 
-          {/* Payee Type */}
           <FloatingSelect<PayeeType>
-            id="payeeType"
+            id="payee-type"
             label="Payee Type"
             value={form.payeeType}
             options={payeeTypeOptions}
@@ -120,82 +117,65 @@ export default function DisbursementForm({
             }
           />
 
-          {/* Service Description */}
-          <div className="form-field">
-            <input
-              className="floating-input"
-              value={form.serviceDescription}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  serviceDescription: e.target.value,
-                })
-              }
-              required
-            />
-            <label className="floating-label">Service Description</label>
-          </div>
+          <FloatingInput
+            id="service-description"
+            label="Service Description"
+            value={form.serviceDescription}
+            onChange={(value) =>
+              setForm({
+                ...form,
+                serviceDescription: value,
+              })
+            }
+            required
+          />
 
-          {/* Total Charged */}
-          <div className="form-field">
-            <input
-              className="floating-input"
-              type="number"
-              step="0.01"
-              value={form.totalCharged}
-              onChange={(e) =>
-                setForm({
-                  ...form,
-                  totalCharged: Number(e.target.value),
-                })
-              }
-              required
-            />
-            <label className="floating-label">Total Charged</label>
-          </div>
+          <FloatingInput
+            id="total-charged"
+            label="Total Charged"
+            type="number"
+            value={String(form.totalCharged)}
+            onChange={(value) =>
+              setForm({
+                ...form,
+                totalCharged: Number(value),
+              })
+            }
+            required
+          />
 
-          {/* Currency */}
-          <div className="form-field">
-            <input
-              className="floating-input"
-              value={form.currency}
-              onChange={(e) => setForm({ ...form, currency: e.target.value })}
-            />
-            <label className="floating-label">Currency</label>
-          </div>
+          <FloatingInput
+            id="currency"
+            label="Currency"
+            value={form.currency}
+            onChange={(value) => setForm({ ...form, currency: value })}
+          />
 
-          {/* Due Date */}
-          <div className="form-field">
-            <input
-              className="floating-input"
-              type="date"
-              value={form.dueDate}
-              onChange={(e) => setForm({ ...form, dueDate: e.target.value })}
-            />
-            <label className="floating-label">Due Date</label>
-          </div>
-          {/* Notes */}
+          <FloatingInput
+            id="due-date"
+            label="Due Date"
+            type="date"
+            value={form.dueDate ?? ""}
+            onChange={(value) => setForm({ ...form, dueDate: value })}
+          />
+
           <div className="form-field form-field-full">
-            <textarea
+            <FloatingInput
               id="notes"
-              className="floating-input"
-              rows={4}
-              value={form.notes}
-              onChange={(e) => setForm({ ...form, notes: e.target.value })}
+              label="Notes"
+              value={form.notes ?? ""}
+              onChange={(value) => setForm({ ...form, notes: value })}
+              multiline
             />
-            <label htmlFor="notes" className="floating-label">
-              Notes
-            </label>
           </div>
         </div>
 
-        {/* Actions */}
         <div className="form-actions">
           <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
             <button
               className="button"
               type="submit"
-              disabled={isSubmitting || isInvalid}
+              disabled={isSubmitting || submitting || isInvalid}
             >
               {submitLabel}
             </button>

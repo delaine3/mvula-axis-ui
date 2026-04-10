@@ -22,7 +22,6 @@ export function UpdateDisbursementPage() {
   const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
   const [paymentErrorMessage, setPaymentErrorMessage] = useState("");
-
   const id = Number(disbursementId);
 
   const {
@@ -51,7 +50,6 @@ export function UpdateDisbursementPage() {
     isInstallment: false,
     disbursementStatus: "",
   };
-
   return (
     <section className="vertical-form">
       <DisbursementForm
@@ -75,7 +73,6 @@ export function UpdateDisbursementPage() {
           }
         }}
       />
-
       <DisbursementPaymentForm
         isSubmitting={isSubmittingPayment}
         errorMessage={paymentErrorMessage}

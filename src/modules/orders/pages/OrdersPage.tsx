@@ -1,8 +1,9 @@
 import { DataTable } from "../../../components/ui/DataTable";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { deleteOrder, getOrders } from "../api/ordersApi";
 import { getOrderColumns } from "../../columns/orderColumns";
+
 export function OrdersPage() {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -10,7 +11,7 @@ export function OrdersPage() {
 
   const search = params.get("search") ?? "";
   const sortBy = params.get("sortBy") ?? "id";
-  const direction = params.get("direction") ?? "desc";
+  const direction = (params.get("direction") ?? "desc") as "asc" | "desc";
   const page = Number(params.get("page") ?? 0);
   const size = Number(params.get("size") ?? 10);
 
@@ -20,7 +21,7 @@ export function OrdersPage() {
       getOrders({
         page,
         size,
-        search,
+        search: search.trim() || undefined,
         sortBy,
         sortDir: direction,
       }),
@@ -53,7 +54,7 @@ export function OrdersPage() {
     setParams(next);
   };
 
-  const handleSort = (columnId: string) => {
+  function handleSort(columnId: string) {
     if (sortBy === columnId) {
       updateParams({
         direction: direction === "asc" ? "desc" : "asc",
@@ -66,58 +67,68 @@ export function OrdersPage() {
         page: 0,
       });
     }
-  };
+  }
+
+  function handlePreviousPage() {
+    updateParams({
+      page: Math.max(page - 1, 0),
+    });
+  }
+
+  function handleNextPage() {
+    updateParams({
+      page: data && page + 1 < data.totalPages ? page + 1 : page,
+    });
+  }
+
+  function handlePageSizeChange(nextSize: number) {
+    updateParams({
+      size: nextSize,
+      page: 0,
+    });
+  }
+
+  function handleCreateClick() {
+    navigate("/orders/new");
+  }
 
   return (
-    <section>
-      <div className="page-header">
-        <h2 className="page-title">Orders</h2>
-        <Link to="/orders/new" className="button-link">
-          Create Order
-        </Link>
-      </div>
-
-      <div className="toolbar">
-        <input
-          className="text-input"
-          placeholder="Search orders"
-          value={search}
-          onChange={(e) =>
+    <section style={{ padding: "1.5rem" }}>
+      <DataTable
+        title="Orders"
+        data={data?.items ?? []}
+        columns={columns}
+        isLoading={isLoading}
+        isError={isError}
+        emptyMessage="No orders found."
+        sorting={{
+          sortBy,
+          direction,
+          onSort: handleSort,
+        }}
+        onRowClick={(order) => navigate(`/orders/${order.id}`)}
+        search={{
+          value: search,
+          placeholder: "Search orders",
+          onChange: (value) =>
             updateParams({
-              search: e.target.value,
+              search: value,
               page: 0,
-            })
-          }
-        />
-      </div>
-
-      <div className="table-container">
-        <DataTable
-          data={data?.items ?? []}
-          columns={columns}
-          onRowClick={(order) => navigate(`/orders/${order.id}`)}
-          isLoading={isLoading}
-          isError={isError}
-          emptyMessage="No orders found."
-          sorting={{
-            sortBy,
-            direction: direction as "asc" | "desc",
-            onSort: handleSort,
-          }}
-          pagination={{
-            page: data?.page ?? 0,
-            totalPages: data?.totalPages ?? 1,
-            size,
-            onPreviousPage: () => updateParams({ page: Math.max(page - 1, 0) }),
-            onNextPage: () =>
-              updateParams({
-                page: data && page + 1 < data.totalPages ? page + 1 : page,
-              }),
-            onPageSizeChange: (nextSize) =>
-              updateParams({ size: nextSize, page: 0 }),
-          }}
-        />
-      </div>
+            }),
+        }}
+        createAction={{
+          label: "Create Order",
+          onClick: handleCreateClick,
+        }}
+        pagination={{
+          page: data?.page ?? 0,
+          totalPages: data?.totalPages ?? 1,
+          size,
+          onPreviousPage: handlePreviousPage,
+          onNextPage: handleNextPage,
+          onPageSizeChange: handlePageSizeChange,
+        }}
+      />
     </section>
   );
 }

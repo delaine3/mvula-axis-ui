@@ -175,6 +175,7 @@ a {
   border-radius: 18px;
   padding: 20px;
   box-shadow: var(--shadow-soft);
+  margin-top: 16px;
 }
 
 .table-container {

@@ -22,12 +22,8 @@ export function DisbursementsPage() {
   const [isError, setIsError] = useState(false);
 
   const [search, setSearch] = useState("");
-  const [payeeTypeFilter, setPayeeTypeFilter] = useState<PayeeType | undefined>(
-    undefined,
-  );
-  const [statusFilter, setStatusFilter] = useState<
-    DisbursementStatus | undefined
-  >(undefined);
+  const [payeeTypeFilter] = useState<PayeeType | undefined>(undefined);
+  const [statusFilter] = useState<DisbursementStatus | undefined>(undefined);
 
   const [pageSize, setPageSize] = useState(5);
   const [sortBy, setSortBy] = useState("createdAt");
